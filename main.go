@@ -8,14 +8,15 @@ import (
 )
 
 func main() {
-	// Create a new game UI (no params now!)
+	// Create a new game UI
 	gameUI := ui.NewGameUI()
 
-	// Configure the Ebiten window.
-	ebiten.SetFullscreen(false)  // Enable fullscreen
+	// Set a reasonable default window size with a 1:1 aspect ratio
+	ebiten.SetWindowSize(600, 600)
+	ebiten.SetFullscreen(false)
 	ebiten.SetWindowTitle("Tic Tac Toe")
 
-	// Start the game loop.
+	// Start the game loop
 	if err := ebiten.RunGame(gameUI); err != nil {
 		log.Fatal(err)
 	}
