@@ -12,7 +12,7 @@ func main() {
 	gameUI := ui.NewGameUI()
 
 	// Configure the Ebiten window.
-	ebiten.SetWindowSize(600, 700) // adjust height for the new menu/buttons space
+	ebiten.SetFullscreen(false)  // Enable fullscreen
 	ebiten.SetWindowTitle("Tic Tac Toe")
 
 	// Start the game loop.

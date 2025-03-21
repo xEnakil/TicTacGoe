@@ -161,9 +161,7 @@ func (g *GameUI) Draw(screen *ebiten.Image) {
 }
 
 func (g *GameUI) Layout(outsideWidth, outsideHeight int) (int, int) {
-    // Return the same size as screenWidth and screenHeight constants
-    // to ensure the window matches the game size exactly
-    return screenWidth, screenHeight
+    return outsideWidth, outsideHeight
 }
 
 func (g *GameUI) startGame(difficulty string) {
@@ -180,7 +178,13 @@ func (g *GameUI) startGame(difficulty string) {
 
 // drawBoard uses thick lines for the grid and draws X/O with thicker strokes.
 func (g *GameUI) drawBoard(screen *ebiten.Image) {
-    cellSize := screenWidth / 3
+    screenWidth := screen.Bounds().Dx()
+    screenHeight := screen.Bounds().Dy()
+    boardSize := math.Min(float64(screenWidth), float64(screenHeight))
+    cellSize := boardSize / 3
+
+    offsetX := (float64(screenWidth) - boardSize) / 2
+    offsetY := (float64(screenHeight) - boardSize) / 2
 
     // 1) Draw thick grid lines using rectangles
     lineColor := color.RGBA{60, 60, 60, 255} // dark gray
@@ -188,49 +192,59 @@ func (g *GameUI) drawBoard(screen *ebiten.Image) {
 
     // Vertical lines
     for i := 1; i <= 2; i++ {
-        x := float64(i * cellSize)
-        ebitenutil.DrawRect(screen, x-(lineThickness/2), 0, lineThickness, float64(cellSize*3), lineColor)
+        x := float64(i)*cellSize + offsetX
+        ebitenutil.DrawRect(screen, x-(lineThickness/2), offsetY, lineThickness, boardSize, lineColor)
     }
 
     // Horizontal lines
     for i := 1; i <= 2; i++ {
-        y := float64(i * cellSize)
-        ebitenutil.DrawRect(screen, 0, y-(lineThickness/2), float64(cellSize*3), lineThickness, lineColor)
+        y := float64(i)*cellSize + offsetY
+        ebitenutil.DrawRect(screen, offsetX, y-(lineThickness/2), boardSize, lineThickness, lineColor)
     }
 
     // 2) Draw the X and O
     for i, cell := range g.board.Cells {
-        x, y := g.boardIndexToScreenPos(i)
+        x := float64(i%3)*cellSize + offsetX
+        y := float64(i/3)*cellSize + offsetY
         switch cell {
         case game.PlayerX:
             // Draw thick X
             drawThickLine(screen,
-                float64(x+20), float64(y+20),
-                float64(x+cellSize-20), float64(y+cellSize-20),
+                x+20, y+20,
+                x+cellSize-20, y+cellSize-20,
                 6, color.RGBA{220, 20, 60, 255}) // crimson
 
             drawThickLine(screen,
-                float64(x+cellSize-20), float64(y+20),
-                float64(x+20), float64(y+cellSize-20),
+                x+cellSize-20, y+20,
+                x+20, y+cellSize-20,
                 6, color.RGBA{220, 20, 60, 255})
 
         case game.PlayerO:
-            centerX := float64(x + cellSize/2)
-            centerY := float64(y + cellSize/2)
-            radius := float64(cellSize/2 - 20)
+            centerX := x + cellSize/2
+            centerY := y + cellSize/2
+            radius := cellSize/2 - 20
             drawThickCircle(screen, centerX, centerY, radius, 6, color.RGBA{30, 144, 255, 255}) // dodger blue
         }
     }
 }
 
 func (g *GameUI) screenPosToBoardIndex(x, y int) int {
-    cellWidth := screenWidth / 3
-    // Only consider the top 600x600 for the board
-    if x < 0 || x >= cellWidth*3 || y < 0 || y >= cellWidth*3 {
+    screenWidth := ebiten.WindowSize()
+    boardSize := math.Min(float64(screenWidth[0]), float64(screenWidth[1]))
+    cellSize := boardSize / 3
+    
+    offsetX := (float64(screenWidth[0]) - boardSize) / 2
+    offsetY := (float64(screenWidth[1]) - boardSize) / 2
+    
+    x = int(float64(x) - offsetX)
+    y = int(float64(y) - offsetY)
+    
+    if x < 0 || x >= int(boardSize) || y < 0 || y >= int(boardSize) {
         return -1
     }
-    col := x / cellWidth
-    row := y / cellWidth
+    
+    col := int(float64(x) / cellSize)
+    row := int(float64(y) / cellSize)
     return row*3 + col
 }
 
